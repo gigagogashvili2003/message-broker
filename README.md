@@ -28,7 +28,7 @@ Prerequisites
 Node.js and npm installed.
 Installation
 
-```
+```bash
 # Clone the repository
 git clone https://github.com/your-username/your-repository.git
 
@@ -43,17 +43,17 @@ npm install
 Usage
 Supercharge your applications with our message-broker! 🚀
 
-```
+```typescript
 // Example code demonstrating how to use the message-broker
-import { MessageBroker } from 'your-message-broker-package';
+import { MessageBroker } from "your-message-broker-package";
 
 const broker = new MessageBroker();
 
 // Publish a message
-broker.publish('queueName', 'Hello, World!');
+broker.publish("queueName", "Hello, World!");
 
 // Subscribe to a queue
-broker.subscribe('queueName', (message) => {
+broker.subscribe("queueName", (message) => {
   console.log(`Received message: ${message}`);
 });
 ```
