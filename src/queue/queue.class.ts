@@ -1,5 +1,4 @@
-import { Node } from "@src/classes/node";
-import { INode } from "@src/interfaces";
+import { INode, Node } from "src/node";
 
 export class Queue<T extends INode> {
   private head: Node<T> | null;
