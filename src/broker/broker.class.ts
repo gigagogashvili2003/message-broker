@@ -1,4 +1,7 @@
 import net from "net";
+import { TCPHeader } from "src/common";
+import { Handshake } from "src/common/enums";
+import { Message } from "src/common/interfaces/messages";
 import { INode } from "src/node";
 import { Queue } from "src/queue";
 
@@ -19,44 +22,72 @@ export class Broker<T extends INode> {
   }
 
   public onSocketConnect(socket: net.Socket) {
-    console.log(`New Socket Connected`);
     socket.on("data", this.onSocketData.bind(this, socket));
   }
 
   public onSocketData(socket: net.Socket, data: Buffer) {
     const strData = data.toString();
-
     const dataParts = strData.split(";");
 
-    const queueEntry = dataParts.find((item) => item.startsWith("QUEUE="));
-    const handShakeEntry = dataParts.find((item) => item.startsWith("handShake="));
+    const headers = dataParts.find((item) => item.startsWith("HEADERS="));
+    const messages = dataParts.filter((item) => item.startsWith("MESSAGE="));
 
-    if (queueEntry && handShakeEntry) {
-      const queueName = queueEntry.split("=")[1];
-      const handShakeName = handShakeEntry.split("=")[1];
-
-      if (handShakeName === "publisher") {
-        if (this._queues.get(queueName)) {
-          throw new Error("Duplicate queue");
-        }
-
-        if (this._publishers.get(queueName)) {
-          throw new Error("Duplicate socket instances");
-        }
-
-        const newQueue = new Queue<T>();
-
-        this._publishers.set(queueName, socket);
-        this._queues.set(queueName, newQueue);
+    if (headers) {
+      const [_, headerObj] = headers.split("=");
+      const headerToJSON: TCPHeader = JSON.parse(headerObj);
+      if (headerToJSON.handshake === Handshake.PUBLISHER) {
+        this.processPublisherConnection(headerToJSON.queue, socket);
+      } else if (headerToJSON.handshake === Handshake.CONSUMER) {
+        this.processConsumerConnection(headerToJSON.queue, socket);
       } else {
-        if (this._consumers.get(queueName)) {
-          throw new Error("Duplicate socket instances");
-        }
-
-        this._consumers.set(queueName, socket);
+        throw new Error("Unsupported handshake");
       }
     }
-    console.log(this);
+
+    if (messages.length > 0) {
+      const messagesToJson = messages.map((message) => {
+        const [_, messageObj] = message.split("=");
+        const messageToJSON: Message = JSON.parse(messageObj);
+        return messageToJSON;
+      });
+
+      for (let i = 0; i < messagesToJson.length; i++) {
+        const { handshake, publish, payload } = messagesToJson[i];
+
+        if (handshake === Handshake.PUBLISHER) {
+          console.log("SHEVEDI");
+          if (this._queues.has(publish)) {
+            const queue = this._queues.get(publish);
+            if (!queue) {
+              throw new Error("Queue not found!");
+            }
+          }
+        }
+      }
+      console.log(this._queues.get("auth_queue")?.printPretty());
+    }
+  }
+
+  private processPublisherConnection(queueName: string, socket: net.Socket) {
+    if (this._queues.get(queueName)) {
+      throw new Error("Duplicate queue");
+    }
+    if (this._publishers.get(queueName)) {
+      throw new Error("Duplicate socket instances");
+    }
+
+    const newQueue = new Queue<T>();
+
+    this._publishers.set(queueName, socket);
+    this._queues.set(queueName, newQueue);
+  }
+
+  private processConsumerConnection(queueName: string, socket: net.Socket) {
+    if (this._consumers.get(queueName)) {
+      throw new Error("Duplicate socket instances");
+    }
+
+    this._consumers.set(queueName, socket);
   }
 
   public get publishers() {
