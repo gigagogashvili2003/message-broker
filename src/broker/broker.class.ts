@@ -1,7 +1,7 @@
 import net from "net";
-import { TCPHeader } from "src/common";
 import { Handshake } from "src/common/enums";
 import { Message } from "src/common/interfaces/messages";
+import { TCPHeader } from "src/common/interfaces/tcp-header";
 import { INode } from "src/node";
 import { Queue } from "src/queue";
 
@@ -55,12 +55,13 @@ export class Broker<T extends INode> {
         const { handshake, publish, payload } = messagesToJson[i];
 
         if (handshake === Handshake.PUBLISHER) {
-          console.log("SHEVEDI");
           if (this._queues.has(publish)) {
             const queue = this._queues.get(publish);
             if (!queue) {
               throw new Error("Queue not found!");
             }
+
+            queue.enqueue({ message: "ss" });
           }
         }
       }

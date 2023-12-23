@@ -1,4 +1,4 @@
-import { Handshake } from "./enums";
+import { Handshake } from "../../enums";
 
 export interface TCPHeader {
   queue: string;
