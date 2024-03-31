@@ -1,5 +1,3 @@
-Certainly! Here's a concise README text with emojis:
-
 💌 TypeScript TCP Message Broker 🚀
 Description: A powerful and lightweight message-broker written in TypeScript, using TCP for communication and queues for efficient message handling.
 
